@@ -25,3 +25,13 @@ func (d TaskDTO) DomainToDTO(t domain.Task) TaskDTO {
 		DeadLine:    t.DeadLine,
 	}
 }
+
+func (d TaskDTO) DomainToDTOCollection(ts []domain.Task) []TaskDTO {
+	tasks := make([]TaskDTO, len(ts))
+
+	for i := range ts {
+		tasks[i] = d.DomainToDTO(ts[i])
+	}
+
+	return tasks
+}

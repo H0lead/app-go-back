@@ -23,8 +23,10 @@ type task struct {
 
 type TaskRepository interface {
 	Save(t domain.Task) (domain.Task, error)
+	FindList(uId uint64) ([]domain.Task, error)
 	Find(id uint64) (domain.Task, error)
 	Update(t domain.Task) (domain.Task, error)
+	Delete(id uint64) error
 }
 
 type taskRepository struct {
@@ -54,6 +56,23 @@ func (r taskRepository) Save(t domain.Task) (domain.Task, error) {
 	return t, nil
 }
 
+func (r taskRepository) FindList(uId uint64) ([]domain.Task, error) {
+	// todo: add filters (date, status, deadline, etc.)
+	// todo: add sorting (deadline, created_date, etc.)
+	var tasks []task
+
+	err := r.coll.Find(db.Cond{
+		"user_id":      uId,
+		"deleted_date": nil}).
+		//OrderBy(param)
+		All(&tasks)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.mapModelToDomainCollection(tasks), nil
+}
+
 func (r taskRepository) Find(id uint64) (domain.Task, error) {
 	var t task
 
@@ -77,6 +96,10 @@ func (r taskRepository) Update(t domain.Task) (domain.Task, error) {
 	t = r.mapModelToDomain(tsk)
 
 	return t, nil
+}
+
+func (r taskRepository) Delete(id uint64) error {
+	return r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
 }
 
 func (r taskRepository) mapDomainToModel(t domain.Task) task {
@@ -105,4 +128,14 @@ func (r taskRepository) mapModelToDomain(t task) domain.Task {
 		UpdatedDate: t.UpdatedDate,
 		DeletedDate: t.DeletedDate,
 	}
+}
+
+func (r taskRepository) mapModelToDomainCollection(ts []task) []domain.Task {
+	tasks := make([]domain.Task, len(ts))
+
+	for i := range ts {
+		tasks[i] = r.mapModelToDomain(ts[i])
+	}
+
+	return tasks
 }

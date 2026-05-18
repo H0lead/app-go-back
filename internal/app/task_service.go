@@ -11,6 +11,8 @@ type TaskService interface {
 	Save(t domain.Task) (domain.Task, error)
 	Find(id uint64) (interface{}, error)
 	Update(t domain.Task) (domain.Task, error)
+	Delete(id uint64) error
+	FindList(uId uint64) ([]domain.Task, error)
 }
 
 type taskService struct {
@@ -33,6 +35,17 @@ func (s taskService) Save(t domain.Task) (domain.Task, error) {
 	return task, nil
 }
 
+func (s taskService) FindList(uId uint64) ([]domain.Task, error) {
+	// todo: extend arguments for filtering and sorting
+	tasks, err := s.taskRepo.FindList(uId)
+	if err != nil {
+		log.Printf("taskService.FindList(s.taskRepo.FindList): %s", err)
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
 func (s taskService) Find(id uint64) (interface{}, error) {
 	task, err := s.taskRepo.Find(id)
 	if err != nil {
@@ -51,4 +64,15 @@ func (s taskService) Update(t domain.Task) (domain.Task, error) {
 	}
 
 	return task, nil
+}
+
+func (s taskService) Delete(id uint64) error {
+	err := s.taskRepo.Delete(id)
+
+	if err != nil {
+		log.Printf("taskService.Delete(s.taskRepo.Delete): %s", err)
+		return err
+	}
+
+	return nil
 }
